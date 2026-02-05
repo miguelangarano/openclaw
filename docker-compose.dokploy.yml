@@ -33,8 +33,9 @@ services:
         "node",
         "dist/index.js",
         "gateway",
+        "--allow-unconfigured",
         "--bind",
-        "0.0.0.0",
+         "lan",
         "--port",
         "18789",
       ]
