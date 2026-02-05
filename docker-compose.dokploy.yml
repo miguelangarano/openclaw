@@ -1,37 +1,31 @@
 services:
   openclaw-gateway:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dokploy
     image: openclaw:dokploy
     environment:
-      HOME: /home/node
-      TERM: xterm-256color
-      
-      # --- AUTHENTICATION ---
-      # Generate a token: openssl rand -hex 32
+      # --- AUTH ---
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-
-      # --- MODEL PROVIDER (Deepseek via OpenRouter) ---
-      # 1. Get an API key from https://openrouter.ai/keys
-      # 2. Set this environment variable in Dokploy
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       
-      # Note: To set the default model to Deepseek, you must configure it after deployment:
-      # Option A (Web UI): Go to Settings -> Model -> Primary Model -> type "openrouter/deepseek/deepseek-r1"
-      # Option B (CLI): docker compose exec openclaw-gateway openclaw models set openrouter/deepseek/deepseek-r1
-
-      # --- WEB SESSIONS ---
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      # --- API KEYS ---
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
       
       # --- NETWORK ---
       OPENCLAW_GATEWAY_BIND: "0.0.0.0"
+      
+      # --- CONFIG ---
+      # Force OpenClaw to use our custom config file which uses the env vars
+      OPENCLAW_CONFIG_PATH: /app/openclaw.dokploy.json
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
-    # ports:
-    #   - "18789:18789"
-    #   - "18790:18790"
+      # Mount the config file into the container
+      - ./openclaw.dokploy.json:/app/openclaw.dokploy.json
+    ports:
+      - "18789:18789"
     init: true
     restart: unless-stopped
     command:
@@ -44,21 +38,6 @@ services:
         "--port",
         "18789",
       ]
-
-  # Optional: CLI tool for management (only run when needed)
-  # openclaw-cli:
-  #   build: .
-  #   image: openclaw:dokploy
-  #   profiles: ["tools"]
-  #   environment:
-  #     HOME: /home/node
-  #     TERM: xterm-256color
-  #     OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-  #     BROWSER: echo
-  #   volumes:
-  #     - openclaw_config:/home/node/.openclaw
-  #     - openclaw_workspace:/home/node/.openclaw/workspace
-  #   entrypoint: ["node", "dist/index.js"]
 
 volumes:
   openclaw_config:

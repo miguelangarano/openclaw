@@ -1,0 +1,33 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/deepseek/deepseek-r1"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "apiKey": "${OPENROUTER_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek/deepseek-r1",
+            "name": "DeepSeek R1",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+          },
+          {
+            "id": "deepseek/deepseek-v3",
+            "name": "DeepSeek V3",
+            "contextWindow": 163840,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  }
+}
