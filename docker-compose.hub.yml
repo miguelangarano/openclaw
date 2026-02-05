@@ -1,16 +1,13 @@
 services:
   openclaw-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.dokploy
-    image: openclaw:dokploy
+    # Replace <username> with your Docker Hub username or set OPENCLAW_IMAGE env var
+    image: ${OPENCLAW_IMAGE:-<username>/openclaw:dokploy}
     environment:
       # --- AUTH ---
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
       
       # --- API KEYS ---
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
       
@@ -18,12 +15,10 @@ services:
       OPENCLAW_GATEWAY_BIND: "0.0.0.0"
       
       # --- CONFIG ---
-      # Force OpenClaw to use our custom config file which uses the env vars
       OPENCLAW_CONFIG_PATH: /app/openclaw.dokploy.json
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
-      # Mount the config file into the container
       - ./openclaw.dokploy.json:/app/openclaw.dokploy.json
     ports:
       - "18789:18789"
@@ -36,7 +31,7 @@ services:
         "gateway",
         "--allow-unconfigured",
         "--bind",
-         "lan",
+        "lan",
         "--port",
         "18789",
       ]

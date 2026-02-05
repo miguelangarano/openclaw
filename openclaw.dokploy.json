@@ -1,30 +1,42 @@
 {
+  "gateway": {
+    "controlUi": {
+      "enabled": true,
+      "allowInsecureAuth": true
+    },
+    "mode": "local",
+    "auth": {
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "bind": "lan",
+    "port": 18789,
+    "trustedProxies": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "127.0.0.0/8"
+    ]
+  },
   "agents": {
     "defaults": {
       "model": {
-        "primary": "openrouter/deepseek/deepseek-r1"
+        "primary": "deepseek/deepseek-chat"
+      },
+      "models": {
+        "deepseek/deepseek-chat": {}
       }
     }
   },
   "models": {
     "providers": {
-      "openrouter": {
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "apiKey": "${OPENROUTER_API_KEY}",
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com/v1",
+        "apiKey": "${DEEPSEEK_API_KEY}",
         "api": "openai-completions",
         "models": [
           {
-            "id": "deepseek/deepseek-r1",
-            "name": "DeepSeek R1",
-            "contextWindow": 163840,
-            "maxTokens": 8192,
-            "reasoning": true
-          },
-          {
-            "id": "deepseek/deepseek-v3",
-            "name": "DeepSeek V3",
-            "contextWindow": 163840,
-            "maxTokens": 8192
+            "id": "deepseek-chat",
+            "name": "deepseek-chat"
           }
         ]
       }
