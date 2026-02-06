@@ -21,27 +21,25 @@ services:
       
       # --- CONFIG ---
       # Force OpenClaw to use our custom config file which uses the env vars
-      OPENCLAW_CONFIG_PATH: /home/node/openclaw.dokploy.json
+      # We point to the persistent volume location so changes are saved
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.dokploy.json
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
-      # Mount the config file into the container
-      - ./openclaw.dokploy.json:/home/node/openclaw.dokploy.json
+      # Mount the repo config file as a seed template
+      - ./openclaw.dokploy.json:/tmp/openclaw.dokploy.json
     ports:
       - "18789:18789"
     init: true
     restart: unless-stopped
-    command:
-      [
-        "node",
-        "dist/index.js",
-        "gateway",
-        "--allow-unconfigured",
-        "--bind",
-         "lan",
-        "--port",
-        "18789",
-      ]
+    # 1. Check if persistent config exists in volume
+    # 2. If NOT, copy from repo template (seed)
+    # 3. Start Gateway
+    command: >
+      sh -c "if [ ! -f /home/node/.openclaw/openclaw.dokploy.json ]; then
+      cp /tmp/openclaw.dokploy.json /home/node/.openclaw/openclaw.dokploy.json;
+      fi &&
+      node dist/index.js gateway --allow-unconfigured --bind lan --port 18789"
 
 volumes:
   openclaw_config:
