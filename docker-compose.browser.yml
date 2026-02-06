@@ -1,0 +1,16 @@
+services:
+  browserless:
+    image: ghcr.io/browserless/chromium:latest
+    container_name: browserless
+    restart: unless-stopped
+    environment:
+      - TOKEN=change-me # optional but strongly recommended
+    shm_size: 1gb
+    ports:
+      - "45123:3000"   # host:container
+    networks:
+      - openclaw-net
+
+networks:
+  openclaw-net:
+    driver: bridge

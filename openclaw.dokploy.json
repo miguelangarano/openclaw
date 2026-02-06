@@ -1,5 +1,12 @@
 {
   "gateway": {
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    },
     "controlUi": {
       "enabled": true,
       "allowInsecureAuth": true
@@ -16,6 +23,19 @@
       "192.168.0.0/16",
       "127.0.0.0/8"
     ]
+  },
+  "commands": {
+    "restart": true
+  },
+  "browser": {
+    "enabled": true,
+    "defaultProfile": "remote",
+    "profiles": {
+      "remote": {
+        "cdpUrl": "${BROWSER_CDP_URL}",
+        "color": "#00AA00"
+      }
+    }
   },
   "agents": {
     "defaults": {

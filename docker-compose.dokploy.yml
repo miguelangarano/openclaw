@@ -1,15 +1,17 @@
 services:
   openclaw-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.dokploy
-    image: openclaw:dokploy
+    # Uncomment 'build' to build locally. For Dokploy, we use the pre-built image to save resources.
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.dokploy
+    image: ${DOCKER_IMAGE:-openclaw:dokploy}
     environment:
       # --- AUTH ---
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+
+      BROWSER_CDP_URL: ${BROWSER_CDP_URL}
       
       # --- API KEYS ---
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}

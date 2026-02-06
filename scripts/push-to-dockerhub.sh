@@ -6,7 +6,7 @@ set -e
 
 USERNAME=$1
 IMAGE_NAME=${2:-openclaw}
-TAG=${3:-dokploy}
+TAG=${3:-latest}
 
 if [ -z "$USERNAME" ]; then
   echo "Error: Docker Hub username is required."
