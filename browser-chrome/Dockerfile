@@ -1,37 +1,62 @@
 FROM debian:bookworm-slim
 
+# Instala Chromium + herramientas mínimas (curl/ss) + socat para forward CDP
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium ca-certificates fonts-liberation tini \
+    chromium \
+    ca-certificates \
+    fonts-liberation \
+    tini \
+    socat \
+    curl \
+    iproute2 \
   && rm -rf /var/lib/apt/lists/*
 
+# Usuario no-root
 RUN useradd -m -u 10001 chrome \
   && mkdir -p /data \
   && chown -R chrome:chrome /data
 
-# Entrypoint script (root) -> limpia locks, fija permisos, luego ejecuta chromium como "chrome"
+# Entrypoint robusto: corre como root para fix permisos + limpiar locks, luego lanza Chromium como user "chrome"
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/sh
 set -eu
 
-# Ensure /data exists and ownership is correct (in case volume has old root-owned files)
+PORT="${CDP_PORT:-41273}"
+INTERNAL_PORT="${CDP_INTERNAL_PORT:-41274}"
+
 mkdir -p /data
+# Corrige ownership por si el volumen quedó con archivos root-owned
 chown -R chrome:chrome /data || true
 
-# Remove common Chromium profile locks
+# Limpia locks típicos del profile (por reinicios/crash anteriores)
 rm -f /data/SingletonLock /data/SingletonCookie /data/SingletonSocket /data/Lockfile 2>/dev/null || true
 rm -f /data/Default/SingletonLock /data/Default/SingletonCookie /data/Default/SingletonSocket 2>/dev/null || true
 
-# If you are 100% sure there's no other running chromium using this profile,
-# removing the "Singleton*" files is safe after crashes/restarts.
-
-exec su -s /bin/sh chrome -c "
+# Lanza Chromium escuchando SOLO en localhost dentro del contenedor (estable)
+# Luego publicamos hacia afuera con socat en 0.0.0.0:$PORT
+su -s /bin/sh chrome -c "
   exec chromium --headless=new \
-    --remote-debugging-address=0.0.0.0 \
-    --remote-debugging-port=${CDP_PORT:-41273} \
+    --remote-debugging-address=127.0.0.1 \
+    --remote-debugging-port=${INTERNAL_PORT} \
+    --remote-allow-origins=* \
     --user-data-dir=/data \
     --no-sandbox \
     --disable-dev-shm-usage
-"
+" &
+
+# Espera a que Chromium abra el puerto interno
+for i in $(seq 1 50); do
+  if curl -fsS "http://127.0.0.1:${INTERNAL_PORT}/json/version" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+done
+
+echo "✅ Chromium CDP internal: http://127.0.0.1:${INTERNAL_PORT}"
+echo "✅ Exposing CDP externally on 0.0.0.0:${PORT} via socat"
+
+# Forward TCP externo -> puerto interno
+exec socat TCP-LISTEN:${PORT},fork,reuseaddr TCP:127.0.0.1:${INTERNAL_PORT}
 EOF
 
 RUN chmod +x /entrypoint.sh

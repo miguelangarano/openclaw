@@ -1,14 +1,21 @@
 services:
   chrome-cdp:
     build: .
+    container_name: chrome-cdp
+    restart: unless-stopped
     environment:
       CDP_PORT: 41273
+      CDP_INTERNAL_PORT: 41274
     shm_size: 1gb
     volumes:
       - chrome_data:/data
     ports:
       - "41273:41273"
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:41273/json/version"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   chrome_data:
