@@ -1,21 +1,14 @@
 services:
   chrome-cdp:
     build: .
-    command: >
-      sh -lc "
-      rm -f /data/SingletonLock /data/SingletonCookie /data/SingletonSocket /data/Lockfile 2>/dev/null || true;
-      rm -rf /data/Default/SingletonLock /data/Default/SingletonCookie /data/Default/SingletonSocket 2>/dev/null || true;
-      google-chrome
-        --remote-debugging-address=0.0.0.0
-        --remote-debugging-port=41273
-        --user-data-dir=/data
-        --no-sandbox
-        --disable-dev-shm-usage
+    environment:
+      CDP_PORT: 41273
     shm_size: 1gb
     volumes:
       - chrome_data:/data
     ports:
-      - 41273:41273
+      - "41273:41273"
+    restart: unless-stopped
 
 volumes:
   chrome_data:
