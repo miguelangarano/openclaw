@@ -7,12 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m chrome && mkdir -p /data && chown -R chrome:chrome /data
 USER chrome
 
-EXPOSE 3000
+EXPOSE 41273
 
 CMD ["sh","-lc", "\
   chromium --headless=new \
     --remote-debugging-address=0.0.0.0 \
-    --remote-debugging-port=3000 \
+    --remote-debugging-port=41273 \
     --user-data-dir=/data \
     --no-sandbox \
     --disable-dev-shm-usage \
