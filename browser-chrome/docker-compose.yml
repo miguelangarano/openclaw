@@ -1,0 +1,11 @@
+services:
+  chrome-cdp:
+    build: .
+    shm_size: 1gb
+    volumes:
+      - chrome_data:/data
+    expose:
+      - 3000
+
+volumes:
+  chrome_data:
