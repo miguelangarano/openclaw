@@ -33,6 +33,7 @@ services:
     restart: unless-stopped
     command:
       [
+        "sudo",
         "node",
         "dist/index.js",
         "gateway",
