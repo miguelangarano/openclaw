@@ -2,17 +2,18 @@ FROM debian:bookworm-slim
 
 # Instala Chromium + herramientas mínimas (curl/ss) + socat para forward CDP
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium \
-    xvfb \
-    fluxbox \
-    x11vnc \
-    ca-certificates \
-    fonts-liberation \
-    tini \
-    socat \
-    curl \
-    iproute2 \
-  && rm -rf /var/lib/apt/lists/*
+  chromium \
+  xvfb \
+  fluxbox \
+  dbus \
+  dbus-x11 \
+  ca-certificates \
+  fonts-liberation \
+  tini \
+  socat \
+  curl \
+  iproute2 \
+&& rm -rf /var/lib/apt/lists/*
 
 # Usuario no-root
 RUN useradd -m -u 10001 chrome \
@@ -28,24 +29,36 @@ RUN cat > /entrypoint.sh <<'EOF'
 set -eu
 
 PORT="${CDP_PORT:-41273}"
-INTERNAL_PORT="${CDP_INTERNAL_PORT:-41274}"
+INTERNAL_PORT="41274"
 
 mkdir -p /data
 # Corrige ownership por si el volumen quedó con archivos root-owned
 chown -R chrome:chrome /data || true
 
+# Fix X11 permissions (critical for non-root Xvfb)
+mkdir -p /tmp/.X11-unix
+chmod 1777 /tmp/.X11-unix
+chown root:root /tmp/.X11-unix
+
+# Start dbus daemon (silences Chromium errors)
+mkdir -p /run/dbus
+dbus-daemon --system --fork || true
+
 # Limpia locks típicos del profile (por reinicios/crash anteriores)
 rm -f /data/SingletonLock /data/SingletonCookie /data/SingletonSocket /data/Lockfile 2>/dev/null || true
 rm -f /data/Default/SingletonLock /data/Default/SingletonCookie /data/Default/SingletonSocket 2>/dev/null || true
 
-# Lanza Chromium escuchando SOLO en localhost dentro del contenedor (estable)
-# Luego publicamos hacia afuera con socat en 0.0.0.0:$PORT
+# Lanza Xvfb + Fluxbox + Chromium (Local Bind)
+# Usamos socat para exponerlo robustamente
+echo "✅ Starting Desktop Environment (Xvfb + Fluxbox)..."
+
 su -s /bin/sh chrome -c "
   Xvfb :99 -screen 0 1920x1080x24 &
   sleep 1
   export DISPLAY=:99
   fluxbox &
-  x11vnc -display :99 -forever -nopw -shared -bg &
+  
+  echo '✅ Launching Chromium on internal port ${INTERNAL_PORT}...'
   exec chromium \
     --start-maximized \
     --remote-debugging-address=127.0.0.1 \
@@ -63,6 +76,7 @@ su -s /bin/sh chrome -c "
 " &
 
 # Espera a que Chromium abra el puerto interno
+echo "⏳ Waiting for Chromium CDP..."
 for i in $(seq 1 50); do
   if curl -fsS "http://127.0.0.1:${INTERNAL_PORT}/json/version" >/dev/null 2>&1; then
     break
@@ -70,7 +84,7 @@ for i in $(seq 1 50); do
   sleep 0.2
 done
 
-echo "✅ Chromium CDP internal: http://127.0.0.1:${INTERNAL_PORT}"
+echo "✅ Chromium CDP ready at 127.0.0.1:${INTERNAL_PORT}"
 echo "✅ Exposing CDP externally on 0.0.0.0:${PORT} via socat"
 
 # Forward TCP externo -> puerto interno

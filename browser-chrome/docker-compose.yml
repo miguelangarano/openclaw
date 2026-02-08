@@ -11,7 +11,6 @@ services:
       - chrome_data:/data
     ports:
       - "41273:41273"
-      - "5900:5900"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:41273/json/version"]
       interval: 5s
