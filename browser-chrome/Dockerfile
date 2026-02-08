@@ -3,6 +3,7 @@ FROM debian:bookworm-slim
 # Instala Chromium + herramientas mínimas (curl/ss) + socat para forward CDP
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
+    xvfb \
     ca-certificates \
     fonts-liberation \
     tini \
@@ -35,13 +36,18 @@ rm -f /data/Default/SingletonLock /data/Default/SingletonCookie /data/Default/Si
 # Lanza Chromium escuchando SOLO en localhost dentro del contenedor (estable)
 # Luego publicamos hacia afuera con socat en 0.0.0.0:$PORT
 su -s /bin/sh chrome -c "
-  exec chromium --headless=new \
+  Xvfb :99 -screen 0 1920x1080x24 &
+  sleep 1
+  export DISPLAY=:99
+  exec chromium \
     --remote-debugging-address=127.0.0.1 \
     --remote-debugging-port=${INTERNAL_PORT} \
     --remote-allow-origins=* \
     --user-data-dir=/data \
     --no-sandbox \
     --disable-dev-shm-usage \
+    --disable-blink-features=AutomationControlled \
+    --window-size=1920,1080 \
     --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36'
 " &
 
