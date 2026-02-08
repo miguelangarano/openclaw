@@ -1,0 +1,14 @@
+{
+  "name": "Platform Spoofer",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["declarativeNetRequest", "declarativeNetRequestWithHostAccess"],
+  "host_permissions": ["<all_urls>"],
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  }
+}

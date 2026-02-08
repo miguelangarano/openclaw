@@ -4,6 +4,8 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     xvfb \
+    fluxbox \
+    x11vnc \
     ca-certificates \
     fonts-liberation \
     tini \
@@ -16,6 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -u 10001 chrome \
   && mkdir -p /data \
   && chown -R chrome:chrome /data
+
+# Copia la extensión de spoofing
+COPY extension /extension
 
 # Entrypoint robusto: corre como root para fix permisos + limpiar locks, luego lanza Chromium como user "chrome"
 RUN cat > /entrypoint.sh <<'EOF'
@@ -39,7 +44,10 @@ su -s /bin/sh chrome -c "
   Xvfb :99 -screen 0 1920x1080x24 &
   sleep 1
   export DISPLAY=:99
+  fluxbox &
+  x11vnc -display :99 -forever -nopw -shared -bg &
   exec chromium \
+    --start-maximized \
     --remote-debugging-address=127.0.0.1 \
     --remote-debugging-port=${INTERNAL_PORT} \
     --remote-allow-origins=* \
@@ -47,8 +55,11 @@ su -s /bin/sh chrome -c "
     --no-sandbox \
     --disable-dev-shm-usage \
     --disable-blink-features=AutomationControlled \
+    --disable-gpu \
+    --disable-software-rasterizer \
+    --load-extension=/extension \
     --window-size=1920,1080 \
-    --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+    --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.7559.109 Safari/537.36'
 " &
 
 # Espera a que Chromium abra el puerto interno
@@ -68,6 +79,6 @@ EOF
 
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 41273
+EXPOSE 41273 5900
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
