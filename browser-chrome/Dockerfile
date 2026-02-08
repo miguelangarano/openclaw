@@ -41,7 +41,8 @@ su -s /bin/sh chrome -c "
     --remote-allow-origins=* \
     --user-data-dir=/data \
     --no-sandbox \
-    --disable-dev-shm-usage
+    --disable-dev-shm-usage \
+    --user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
 " &
 
 # Espera a que Chromium abra el puerto interno
