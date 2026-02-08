@@ -1,6 +1,6 @@
 services:
   chrome-cdp:
-    build: .
+    image: miguelangarano/browser-chrome:latest
     container_name: chrome-cdp
     restart: unless-stopped
     environment:
